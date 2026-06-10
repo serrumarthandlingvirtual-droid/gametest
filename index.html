@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Adventure 3D</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+        #gameUI {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            z-index: 100;
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 48px;
+            text-align: center;
+            display: none;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.8);
+            padding: 40px;
+            border-radius: 20px;
+        }
+        #gameOver button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameUI">
+        <div>💎 Crystals: <span id="score">0</span>/10</div>
+        <div>❤️ Health: <span id="health">100</span></div>
+    </div>
+    
+    <div id="instructions">
+        WASD or Arrow Keys to Move | SPACE to Jump | Collect all crystals!
+    </div>
+    
+    <div id="gameOver">
+        <div id="gameOverText">Victory!</div>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Game variables
+        let scene, camera, renderer;
+        let player, playerVelocity = new THREE.Vector3();
+        let trees = [], crystals = [], enemies = [];
+        let score = 0;
+        let health = 100;
+        let gameActive = true;
+        let keys = {};
+        let canJump = false;
+        
+        // Initialize the game
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 10);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(50, 100, 50);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.left = -50;
+            dirLight.shadow.camera.right = 50;
+            dirLight.shadow.camera.top = 50;
+            dirLight.shadow.camera.bottom = -50;
+            scene.add(dirLight);
+            
+            // Create ground
+            const groundGeometry = new THREE.PlaneGeometry(200, 200);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x3d5c3d });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Create player
+            createPlayer();
+            
+            // Create forest
+            createForest();
+            
+            // Create collectibles
+            createCrystals();
+            
+            // Create enemies
+            createEnemies();
+            
+            // Event listeners
+            document.addEventListener('keydown', (e) => keys[e.code] = true);
+            document.addEventListener('keyup', (e) => keys[e.code] = false);
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start game loop
+            animate();
+        }
+        
+        function createPlayer() {
+            const playerGroup = new THREE.Group();
+            
+            // Body
+            const bodyGeometry = new THREE.BoxGeometry(1, 1.5, 0.5);
+            const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0xff6b6b });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 0.75;
+            body.castShadow = true;
+            playerGroup.add(body);
+            
+            // Head
+            const headGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+            const headMaterial = new THREE.MeshLambertMaterial({ color: 0xffe4c4 });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 1.8;
+            head.castShadow = true;
+            playerGroup.add(head);
+            
+            player = playerGroup;
+            player.position.set(0, 0, 0);
+            scene.add(player);
+        }
+        
+        function createForest() {
+            const treeCount = 50;
+            
+            for (let i = 0; i < treeCount; i++) {
+                const treeGroup = new THREE.Group();
+                
+                // Trunk
+                const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.5, 3, 8);
+                const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x4a3728 });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.position.y = 1.5;
+                trunk.castShadow = true;
+                trunk.receiveShadow = true;
+                treeGroup.add(trunk);
+                
+                // Leaves
+                const leavesGeometry = new THREE.ConeGeometry(2, 4, 8);
+                const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228b22 });
+                const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+                leaves.position.y = 4;
+                leaves.castShadow = true;
+                treeGroup.add(leaves);
+                
+                // Random position (avoiding center area)
+                let x, z;
+                do {
+                    x = (Math.random() - 0.5) * 180;
+                    z = (Math.random() - 0.5) * 180;
+                } while (Math.abs(x) < 10 && Math.abs(z) < 10);
+                
+                treeGroup.position.set(x, 0, z);
+                trees.push(treeGroup);
+                scene.add(treeGroup);
+            }
+        }
+        
+        function createCrystals() {
+            const crystalCount = 10;
+            
+            for (let i = 0; i < crystalCount; i++) {
+                const crystalGeometry = new THREE.OctahedronGeometry(0.5);
+                const crystalMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x00ffff,
+                    emissive: 0x00ffff,
+                    emissiveIntensity: 0.5,
+                    shininess: 100
+                });
+                const crystal = new THREE.Mesh(crystalGeometry, crystalMaterial);
+                
+                crystal.position.set(
+                    (Math.random() - 0.5) * 150,
+                    1,
+                    (Math.random() - 0.5) * 150
+                );
+                
+                crystal.castShadow = true;
+                crystals.push(crystal);
+                scene.add(crystal);
+            }
+        }
+        
+        function createEnemies() {
+            const enemyCount = 5;
+            
+            for (let i = 0; i < enemyCount; i++) {
+                const enemyGroup = new THREE.Group();
+                
+                // Body
+                const bodyGeometry = new THREE.BoxGeometry(1, 1, 1);
+                const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x8b0000 });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0.5;
+                body.castShadow = true;
+                enemyGroup.add(body);
+                
+                enemyGroup.position.set(
+                    (Math.random() - 0.5) * 100,
+                    0,
+                    (Math.random() - 0.5) * 100
+                );
+                
+                enemyGroup.userData = {
+                    velocity: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.1,
+                        0,
+                        (Math.random() - 0.5) * 0.1
+                    )
+                };
+                
+                enemies.push(enemyGroup);
+                scene.add(enemyGroup);
+            }
+        }
+        
+        function updatePlayer() {
+            if (!gameActive) return;
+            
+            const speed = 0.15;
+            const jumpForce = 0.3;
+            
+            // Movement
+            if (keys['KeyW'] || keys['ArrowUp']) {
+                player.position.z -= speed;
+                player.rotation.y = Math.PI;
+            }
+            if (keys['KeyS'] || keys['ArrowDown']) {
+                player.position.z += speed;
+                player.rotation.y = 0;
+            }
+            if (keys['KeyA'] || keys['ArrowLeft']) {
+                player.position.x -= speed;
+                player.rotation.y = -Math.PI / 2;
+            }
+            if (keys['KeyD'] || keys['ArrowRight']) {
+                player.position.x += speed;
+                player.rotation.y = Math.PI / 2;
+            }
+            
+            // Jump
+            if ((keys['Space'] || keys['ArrowUp']) && canJump) {
+                playerVelocity.y = jumpForce;
+                canJump = false;
+            }
+            
+            // Gravity
+            playerVelocity.y -= 0.015;
+            player.position.y += playerVelocity.y;
+            
+            // Ground collision
+            if (player.position.y <= 0) {
+                player.position.y = 0;
+                playerVelocity.y = 0;
+                canJump = true;
+            }
+            
+            // Boundary check
+            player.position.x = Math.max(-95, Math.min(95, player.position.x));
+            player.position.z = Math.max(-95, Math.min(95, player.position.z));
+            
+            // Update camera
+            camera.position.x = player.position.x;
+            camera.position.z = player.position.z + 10;
+            camera.position.y = player.position.y + 5;
+            camera.lookAt(player.position);
+        }
+        
+        function updateCrystals() {
+            crystals.forEach((crystal, index) => {
+                crystal.rotation.y += 0.02;
+                crystal.rotation.x += 0.01;
+                
+                // Check collision with player
+                const distance = player.position.distanceTo(crystal.position);
+                if (distance < 1.5) {
+                    scene.remove(crystal);
+                    crystals.splice(index, 1);
+                    score++;
+                    document.getElementById('score').textContent = score;
+                    
+                    if (score >= 10) {
+                        endGame(true);
+                    }
+                }
+            });
+        }
+        
+        function updateEnemies() {
+            enemies.forEach((enemy) => {
+                enemy.position.add(enemy.userData.velocity);
+                enemy.rotation.y += 0.02;
+                
+                // Bounce off boundaries
+                if (Math.abs(enemy.position.x) > 90 || Math.abs(enemy.position.z) > 90) {
+                    enemy.userData.velocity.multiplyScalar(-1);
+                }
+                
+                // Check collision with player
+                const distance = player.position.distanceTo(enemy.position);
+                if (distance < 1.5) {
+                    health -= 1;
+                    document.getElementById('health').textContent = health;
+                    
+                    // Push player back
+                    const pushDirection = player.position.clone().sub(enemy.position).normalize();
+                    player.position.add(pushDirection.multiplyScalar(2));
+                    
+                    if (health <= 0) {
+                        endGame(false);
+                    }
+                }
+            });
+        }
+        
+        function endGame(victory) {
+            gameActive = false;
+            const gameOverDiv = document.getElementById('gameOver');
+            const gameOverText = document.getElementById('gameOverText');
+            gameOverDiv.style.display = 'block';
+            gameOverText.textContent = victory ? '🎉 Victory! All crystals collected!' : '💀 Game Over!';
+            gameOverText.style.color = victory ? '#4CAF50' : '#f44336';
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            updatePlayer();
+            updateCrystals();
+            updateEnemies();
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Start the game
+        init();
+    </script>
+</body>
+</html>
