@@ -1,496 +1,804 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>🏍️ Neon Rider - 3D Motorcycle Racing</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
-  canvas { display: block; }
-
-  #hud {
-    position: absolute; top: 20px; left: 20px;
-    color: #fff; font-size: 18px; font-weight: bold;
-    text-shadow: 2px 2px 4px #000;
-    background: rgba(0,0,0,0.5); padding: 15px; border-radius: 10px;
-    border: 2px solid #00ff88;
-  }
-  #hud div { margin: 5px 0; }
-
-  #speedometer {
-    position: absolute; bottom: 30px; right: 30px;
-    width: 150px; height: 150px;
-    background: radial-gradient(circle, #222 0%, #000 100%);
-    border: 4px solid #00ff88; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: #00ff88; font-size: 32px; font-weight: bold;
-    text-shadow: 0 0 10px #00ff88;
-  }
-
-  #menu, #levelComplete, #gameOver {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    color: #fff; z-index: 10;
-  }
-  #menu h1, #levelComplete h1, #gameOver h1 {
-    font-size: 60px; color: #00ff88;
-    text-shadow: 0 0 20px #00ff88;
-    margin-bottom: 20px;
-  }
-  .btn {
-    padding: 15px 40px; margin: 10px;
-    font-size: 20px; font-weight: bold;
-    background: linear-gradient(45deg, #00ff88, #00cc66);
-    border: none; border-radius: 30px;
-    cursor: pointer; color: #000;
-    transition: transform 0.2s;
-  }
-  .btn:hover { transform: scale(1.1); }
-  .hidden { display: none !important; }
-
-  #levelInfo {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 50px; color: #ffcc00;
-    text-shadow: 0 0 20px #ffcc00;
-    opacity: 0; transition: opacity 0.5s;
-    pointer-events: none;
-  }
-  #controls {
-    position: absolute; bottom: 20px; left: 20px;
-    color: #fff; font-size: 14px;
-    background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jungle Quest: Ancient Ruins</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 255, 100, 0.5);
+            border: 4px solid #4a4a6a;
+            border-radius: 8px;
+        }
+        
+        #gameCanvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            background: #2d4a2d;
+        }
+        
+        #pauseMenu, #startScreen, #winScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #4ade80;
+            text-align: center;
+            z-index: 10;
+        }
+        
+        #pauseMenu {
+            display: none;
+        }
+        
+        #startScreen h1, #winScreen h1 {
+            font-size: 32px;
+            margin-bottom: 30px;
+            color: #fbbf24;
+            text-shadow: 4px 4px #92400e;
+            line-height: 1.5;
+        }
+        
+        #pauseMenu h2 {
+            font-size: 24px;
+            margin-bottom: 40px;
+            color: #fbbf24;
+        }
+        
+        .btn {
+            background: #4a4a6a;
+            border: 4px solid #6b6b8b;
+            color: #4ade80;
+            padding: 15px 30px;
+            margin: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        
+        .btn:hover {
+            background: #5a5a7a;
+            border-color: #7b7b9b;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        #controls {
+            margin-top: 30px;
+            font-size: 10px;
+            color: #9ca3af;
+            line-height: 2;
+        }
+        
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fbbf24;
+            font-size: 12px;
+            z-index: 5;
+            text-shadow: 2px 2px #000;
+        }
+        
+        #pauseBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 5;
+            padding: 10px 15px;
+            font-size: 10px;
+        }
+        
+        .instruction {
+            margin: 20px 0;
+            font-size: 11px;
+            line-height: 1.8;
+            color: #9ca3af;
+            max-width: 80%;
+        }
+        
+        #winScreen {
+            display: none;
+        }
+        
+        .trophy {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div id="hud">
+            <div>KEYS: <span id="keyCount">0</span>/3</div>
+            <div>LEVEL: <span id="levelNum">1</span></div>
+        </div>
+        
+        <button id="pauseBtn" class="btn">PAUSE</button>
+        
+        <div id="startScreen">
+            <h1>🌴 JUNGLE QUEST<br>ANCIENT RUINS ️</h1>
+            <div class="instruction">
+                Explore the mysterious jungle ruins and solve complex puzzles!<br><br>
+                Collect 3 GOLDEN KEYS to unlock the ancient temple.<br>
+                Avoid traps, activate switches, and find hidden paths.
+            </div>
+            <button class="btn" onclick="startGame()">START ADVENTURE</button>
+            <div id="controls">
+                CONTROLS:<br>
+                ARROW KEYS or WASD - Move<br>
+                SPACE - Interact/Jump<br>
+                P or ESC - Pause Game
+            </div>
+        </div>
+        
+        <div id="pauseMenu">
+            <h2>GAME PAUSED</h2>
+            <button class="btn" onclick="resumeGame()">RESUME</button>
+            <button class="btn" onclick="restartGame()">RESTART</button>
+        </div>
+        
+        <div id="winScreen">
+            <div class="trophy">🏆</div>
+            <h1>VICTORY!</h1>
+            <div class="instruction">
+                You've conquered the ancient ruins!<br>
+                All puzzles solved!
+            </div>
+            <button class="btn" onclick="restartGame()">PLAY AGAIN</button>
+        </div>
+    </div>
 
-<div id="menu">
-  <h1>️ NEON RIDER</h1>
-  <p style="margin-bottom:20px; font-size:18px;">Race through 3 epic levels!</p>
-  <button class="btn" onclick="startGame()">START GAME</button>
-  <div style="margin-top:30px; text-align:center;">
-    <p> Controls:</p>
-    <p>️ / W = Accelerate | ️ / S = Brake</p>
-    <p>⬅️ / A = Left | ➡️ / D = Right</p>
-  </div>
-</div>
-
-<div id="levelComplete" class="hidden">
-  <h1>LEVEL COMPLETE! 🏆</h1>
-  <p id="levelStats" style="font-size:24px; margin:20px;"></p>
-  <button class="btn" onclick="nextLevel()">NEXT LEVEL</button>
-</div>
-
-<div id="gameOver" class="hidden">
-  <h1>GAME OVER </h1>
-  <p style="font-size:24px; margin:20px;">You crashed too many times!</p>
-  <button class="btn" onclick="restartLevel()">TRY AGAIN</button>
-  <button class="btn" onclick="backToMenu()">MENU</button>
-</div>
-
-<div id="hud" class="hidden">
-  <div>🏁 Level: <span id="levelNum">1</span> / 3</div>
-  <div> Distance: <span id="distance">0</span> m</div>
-  <div>⏱️ Time: <span id="time">0</span>s</div>
-  <div>💥 Crashes: <span id="crashes">0</span> / 5</div>
-</div>
-
-<div id="speedometer" class="hidden">0</div>
-
-<div id="levelInfo"></div>
-
-<div id="controls" class="hidden">
-  ⬆️⬇️⬅️➡️ or WASD to ride
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-// ============ GAME STATE ============
-let scene, camera, renderer, motorcycle, road;
-let currentLevel = 1;
-let speed = 0, maxSpeed = 2, acceleration = 0.02, braking = 0.04;
-let playerX = 0, playerZ = 0;
-let distanceTraveled = 0, startTime = 0, crashes = 0;
-let keys = {};
-let obstacles = [], roadSegments = [];
-let gameActive = false, levelLength = 5000;
-let clock = new THREE.Clock();
-
-// ============ LEVEL CONFIGS ============
-const levels = {
-  1: { name: "🌆 City Highway", sky: 0x87ceeb, fog: 0xaaccff, ground: 0x3a7a3a, road: 0x333333, maxSpeed: 2, length: 4000, obstacleCount: 15 },
-  2: { name: "️ Desert Canyon", sky: 0xff8844, fog: 0xffaa66, ground: 0xc4883a, road: 0x554433, maxSpeed: 2.5, length: 5000, obstacleCount: 25 },
-  3: { name: "🌃 Neon Night City", sky: 0x0a0a2a, fog: 0x1a1a4a, ground: 0x111122, road: 0x222244, maxSpeed: 3, length: 6000, obstacleCount: 35 }
-};
-
-// ============ INIT ============
-function init() {
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMap.enabled = true;
-  document.body.appendChild(renderer.domElement);
-
-  // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambient);
-  const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-  sun.position.set(50, 100, 50);
-  sun.castShadow = true;
-  scene.add(sun);
-
-  // Motorcycle
-  motorcycle = createMotorcycle();
-  scene.add(motorcycle);
-
-  // Input
-  window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-  window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-  window.addEventListener('resize', onResize);
-
-  animate();
-}
-
-// ============ MOTORCYCLE MODEL ============
-function createMotorcycle() {
-  const bike = new THREE.Group();
-
-  // Body
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(0.8, 0.5, 2),
-    new THREE.MeshPhongMaterial({ color: 0xff2244 })
-  );
-  body.position.y = 0.5;
-  body.castShadow = true;
-  bike.add(body);
-
-  // Front wheel
-  const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
-  const wheelMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
-  const frontWheel = new THREE.Mesh(wheelGeo, wheelMat);
-  frontWheel.rotation.z = Math.PI / 2;
-  frontWheel.position.set(0, 0.4, 1);
-  bike.add(frontWheel);
-
-  // Back wheel
-  const backWheel = new THREE.Mesh(wheelGeo, wheelMat);
-  backWheel.rotation.z = Math.PI / 2;
-  backWheel.position.set(0, 0.4, -1);
-  bike.add(backWheel);
-
-  // Rider
-  const rider = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6, 0.8, 0.5),
-    new THREE.MeshPhongMaterial({ color: 0x2244aa })
-  );
-  rider.position.set(0, 1.1, -0.2);
-  bike.add(rider);
-
-  // Head
-  const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.25, 16, 16),
-    new THREE.MeshPhongMaterial({ color: 0xffcc88 })
-  );
-  head.position.set(0, 1.6, -0.2);
-  bike.add(head);
-
-  // Helmet
-  const helmet = new THREE.Mesh(
-    new THREE.SphereGeometry(0.3, 16, 16),
-    new THREE.MeshPhongMaterial({ color: 0xff0000 })
-  );
-  helmet.position.set(0, 1.65, -0.2);
-  bike.add(helmet);
-
-  return bike;
-}
-
-// ============ LEVEL BUILDER ============
-function buildLevel(levelNum) {
-  // Clear old
-  while(scene.children.length > 0) scene.remove(scene.children[0]);
-  obstacles = []; roadSegments = [];
-
-  const cfg = levels[levelNum];
-  scene.background = new THREE.Color(cfg.sky);
-  scene.fog = new THREE.Fog(cfg.fog, 50, 200);
-
-  // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambient);
-  const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-  sun.position.set(50, 100, 50);
-  sun.castShadow = true;
-  scene.add(sun);
-
-  if (levelNum === 3) {
-    const neon = new THREE.PointLight(0xff00ff, 1, 100);
-    neon.position.set(0, 20, 0);
-    scene.add(neon);
-  }
-
-  // Ground
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(2000, cfg.length + 500),
-    new THREE.MeshPhongMaterial({ color: cfg.ground })
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = 0;
-  ground.position.z = -cfg.length/2;
-  ground.receiveShadow = true;
-  scene.add(ground);
-
-  // Road
-  const roadGeo = new THREE.PlaneGeometry(12, cfg.length);
-  const roadMat = new THREE.MeshPhongMaterial({ color: cfg.road });
-  road = new THREE.Mesh(roadGeo, roadMat);
-  road.rotation.x = -Math.PI / 2;
-  road.position.y = 0.01;
-  road.position.z = -cfg.length/2;
-  road.receiveShadow = true;
-  scene.add(road);
-
-  // Road lines
-  for (let i = 0; i < cfg.length/10; i++) {
-    const line = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.3, 3),
-      new THREE.MeshBasicMaterial({ color: 0xffffff })
-    );
-    line.rotation.x = -Math.PI / 2;
-    line.position.set(0, 0.02, -i*10);
-    scene.add(line);
-  }
-
-  // Obstacles
-  for (let i = 0; i < cfg.obstacleCount; i++) {
-    const z = -100 - Math.random() * (cfg.length - 200);
-    const x = (Math.random() - 0.5) * 10;
-    const obstacle = createObstacle(levelNum);
-    obstacle.position.set(x, 0, z);
-    scene.add(obstacle);
-    obstacles.push(obstacle);
-  }
-
-  // Scenery (trees/buildings)
-  for (let i = 0; i < 60; i++) {
-    const z = -Math.random() * cfg.length;
-    const side = Math.random() > 0.5 ? 1 : -1;
-    const x = side * (8 + Math.random() * 30);
-    const scenery = createScenery(levelNum);
-    scenery.position.set(x, 0, z);
-    scene.add(scenery);
-  }
-
-  // Finish line
-  const finish = new THREE.Mesh(
-    new THREE.PlaneGeometry(12, 2),
-    new THREE.MeshBasicMaterial({ color: 0xffff00 })
-  );
-  finish.rotation.x = -Math.PI / 2;
-  finish.position.set(0, 0.02, -cfg.length + 10);
-  scene.add(finish);
-
-  // Reset player
-  playerX = 0; playerZ = 0;
-  motorcycle.position.set(0, 0, 0);
-  speed = 0;
-  distanceTraveled = 0;
-  crashes = 0;
-  levelLength = cfg.length;
-  maxSpeed = cfg.maxSpeed;
-}
-
-// ============ OBSTACLES ============
-function createObstacle(levelNum) {
-  const group = new THREE.Group();
-  if (levelNum === 1) {
-    // Cars
-    const car = new THREE.Mesh(
-      new THREE.BoxGeometry(2, 1, 3),
-      new THREE.MeshPhongMaterial({ color: [0x00ff00, 0x0088ff, 0xffff00][Math.floor(Math.random()*3)] })
-    );
-    car.position.y = 0.5;
-    car.castShadow = true;
-    group.add(car);
-  } else if (levelNum === 2) {
-    // Rocks
-    const rock = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(1),
-      new THREE.MeshPhongMaterial({ color: 0x886644 })
-    );
-    rock.position.y = 0.8;
-    rock.castShadow = true;
-    group.add(rock);
-  } else {
-    // Neon barriers
-    const barrier = new THREE.Mesh(
-      new THREE.BoxGeometry(3, 1.5, 0.5),
-      new THREE.MeshPhongMaterial({ color: 0xff00ff, emissive: 0xff00ff, emissiveIntensity: 0.5 })
-    );
-    barrier.position.y = 0.75;
-    group.add(barrier);
-  }
-  return group;
-}
-
-// ============ SCENERY ============
-function createScenery(levelNum) {
-  const group = new THREE.Group();
-  if (levelNum === 1) {
-    // Trees
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 3), new THREE.MeshPhongMaterial({color:0x4a2a0a}));
-    trunk.position.y = 1.5;
-    const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.5), new THREE.MeshPhongMaterial({color:0x228822}));
-    leaves.position.y = 3.5;
-    group.add(trunk, leaves);
-  } else if (levelNum === 2) {
-    // Cacti
-    const cactus = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 3), new THREE.MeshPhongMaterial({color:0x228822}));
-    cactus.position.y = 1.5;
-    group.add(cactus);
-  } else {
-    // Neon buildings
-    const h = 5 + Math.random() * 15;
-    const b = new THREE.Mesh(
-      new THREE.BoxGeometry(4, h, 4),
-      new THREE.MeshPhongMaterial({ color: 0x222244, emissive: 0x00ffff, emissiveIntensity: 0.3 })
-    );
-    b.position.y = h/2;
-    group.add(b);
-  }
-  return group;
-}
-
-// ============ GAME LOGIC ============
-function update(dt) {
-  if (!gameActive) return;
-
-  // Controls
-  if (keys['arrowup'] || keys['w']) speed = Math.min(speed + acceleration, maxSpeed);
-  else if (keys['arrowdown'] || keys['s']) speed = Math.max(speed - braking, 0);
-  else speed = Math.max(speed - 0.005, 0);
-
-  if (keys['arrowleft'] || keys['a']) playerX = Math.max(playerX - 0.15, -5);
-  if (keys['arrowright'] || keys['d']) playerX = Math.min(playerX + 0.15, 5);
-
-  // Move
-  playerZ -= speed;
-  distanceTraveled += speed;
-
-  // Motorcycle lean
-  motorcycle.position.x = playerX;
-  motorcycle.position.z = playerZ;
-  const lean = (keys['arrowleft']||keys['a'] ? 0.3 : 0) + (keys['arrowright']||keys['d'] ? -0.3 : 0);
-  motorcycle.rotation.z = lean;
-  motorcycle.rotation.x = -speed * 0.1;
-
-  // Camera follow
-  camera.position.set(playerX * 0.5, 4, playerZ + 10);
-  camera.lookAt(playerX, 1, playerZ - 10);
-
-  // Collision
-  for (let obs of obstacles) {
-    const dx = Math.abs(playerX - obs.position.x);
-    const dz = Math.abs(playerZ - obs.position.z);
-    if (dx < 1.5 && dz < 2) {
-      speed *= 0.3;
-      crashes++;
-      obs.position.x += (playerX > obs.position.x ? -5 : 5);
-      document.getElementById('crashes').textContent = crashes;
-      if (crashes >= 5) gameOver();
-    }
-  }
-
-  // HUD
-  document.getElementById('distance').textContent = Math.floor(distanceTraveled);
-  document.getElementById('time').textContent = Math.floor((Date.now() - startTime)/1000);
-  document.getElementById('speedometer').textContent = Math.floor(speed * 100);
-
-  // Level complete
-  if (distanceTraveled >= levelLength) levelComplete();
-}
-
-// ============ UI ============
-function startGame() {
-  document.getElementById('menu').classList.add('hidden');
-  document.getElementById('hud').classList.remove('hidden');
-  document.getElementById('speedometer').classList.remove('hidden');
-  document.getElementById('controls').classList.remove('hidden');
-  currentLevel = 1;
-  loadLevel(1);
-}
-
-function loadLevel(n) {
-  buildLevel(n);
-  document.getElementById('levelNum').textContent = n;
-  gameActive = true;
-  startTime = Date.now();
-
-  // Show level name
-  const info = document.getElementById('levelInfo');
-  info.textContent = levels[n].name;
-  info.style.opacity = 1;
-  setTimeout(() => info.style.opacity = 0, 2500);
-}
-
-function levelComplete() {
-  gameActive = false;
-  if (currentLevel < 3) {
-    document.getElementById('levelStats').textContent =
-      `Time: ${Math.floor((Date.now()-startTime)/1000)}s | Crashes: ${crashes}`;
-    document.getElementById('levelComplete').classList.remove('hidden');
-  } else {
-    document.getElementById('gameOver').querySelector('h1').textContent = '🏆 YOU WIN! ';
-    document.getElementById('gameOver').querySelector('p').textContent =
-      `All 3 levels complete! Total crashes: ${crashes}`;
-    document.getElementById('gameOver').classList.remove('hidden');
-  }
-}
-
-function nextLevel() {
-  document.getElementById('levelComplete').classList.add('hidden');
-  currentLevel++;
-  loadLevel(currentLevel);
-}
-
-function restartLevel() {
-  document.getElementById('gameOver').classList.add('hidden');
-  loadLevel(currentLevel);
-}
-
-function gameOver() {
-  gameActive = false;
-  document.getElementById('gameOver').querySelector('h1').textContent = 'GAME OVER 💥';
-  document.getElementById('gameOver').querySelector('p').textContent = 'Too many crashes!';
-  document.getElementById('gameOver').classList.remove('hidden');
-}
-
-function backToMenu() {
-  document.getElementById('gameOver').classList.add('hidden');
-  document.getElementById('hud').classList.add('hidden');
-  document.getElementById('speedometer').classList.add('hidden');
-  document.getElementById('controls').classList.add('hidden');
-  document.getElementById('menu').classList.remove('hidden');
-}
-
-function onResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = clock.getDelta();
-  update(dt);
-  renderer.render(scene, camera);
-}
-
-init();
-</script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameRunning = false;
+        let gamePaused = false;
+        let keysCollected = 0;
+        let currentLevel = 1;
+        
+        // Input handling
+        const keys = {};
+        
+        // Player object with 3D-style rendering
+        const player = {
+            x: 100,
+            y: 300,
+            width: 32,
+            height: 48,
+            vx: 0,
+            vy: 0,
+            speed: 4,
+            jumpPower: -12,
+            grounded: false,
+            facing: 1,
+            animFrame: 0,
+            color: '#f97316'
+        };
+        
+        // Gravity and physics
+        const gravity = 0.6;
+        const friction = 0.85;
+        
+        // Complex puzzle elements
+        let platforms = [];
+        let switches = [];
+        let doors = [];
+        let keys = [];
+        let hazards = [];
+        let movingPlatforms = [];
+        let pressurePlates = [];
+        let particles = [];
+        
+        // Initialize level
+        function initLevel() {
+            keysCollected = 0;
+            player.x = 50;
+            player.y = 400;
+            player.vx = 0;
+            player.vy = 0;
+            
+            // Ground and platforms with jungle theme
+            platforms = [
+                // Ground sections
+                {x: 0, y: 550, w: 300, h: 50, type: 'ground'},
+                {x: 350, y: 550, w: 200, h: 50, type: 'ground'},
+                {x: 600, y: 550, w: 200, h: 50, type: 'ground'},
+                
+                // Elevated platforms
+                {x: 200, y: 450, w: 100, h: 20, type: 'platform'},
+                {x: 400, y: 380, w: 100, h: 20, type: 'platform'},
+                {x: 600, y: 320, w: 100, h: 20, type: 'platform'},
+                {x: 100, y: 280, w: 120, h: 20, type: 'platform'},
+                {x: 300, y: 200, w: 100, h: 20, type: 'platform'},
+                {x: 500, y: 150, w: 150, h: 20, type: 'platform'},
+                
+                // Temple entrance
+                {x: 700, y: 450, w: 100, h: 100, type: 'temple'}
+            ];
+            
+            // Pressure plates (require standing on them)
+            pressurePlates = [
+                {x: 230, y: 530, w: 40, h: 20, activated: false, id: 1},
+                {x: 430, y: 530, w: 40, h: 20, activated: false, id: 2},
+                {x: 650, y: 530, w: 40, h: 20, activated: false, id: 3}
+            ];
+            
+            // Switches (click to toggle)
+            switches = [
+                {x: 250, y: 420, w: 30, h: 30, activated: false, connectedTo: 'door1'},
+                {x: 450, y: 350, w: 30, h: 30, activated: false, connectedTo: 'door2'},
+                {x: 150, y: 250, w: 30, h: 30, activated: false, connectedTo: 'bridge'}
+            ];
+            
+            // Doors (locked, need keys or switches)
+            doors = [
+                {x: 340, y: 490, w: 10, h: 60, locked: true, id: 'door1', open: false},
+                {x: 590, y: 490, w: 10, h: 60, locked: true, id: 'door2', open: false},
+                {x: 750, y: 350, w: 10, h: 100, locked: true, id: 'temple', open: false}
+            ];
+            
+            // Moving platforms
+            movingPlatforms = [
+                {x: 300, y: 480, w: 60, h: 15, vx: 2, minX: 280, maxX: 380},
+                {x: 500, y: 250, w: 60, h: 15, vx: -2, minX: 480, maxX: 580}
+            ];
+            
+            // Collectible keys
+            keys = [
+                {x: 240, y: 410, w: 20, h: 20, collected: false, color: '#fbbf24'},
+                {x: 440, y: 340, w: 20, h: 20, collected: false, color: '#fbbf24'},
+                {x: 640, y: 280, w: 20, h: 20, collected: false, color: '#fbbf24'}
+            ];
+            
+            // Hazards (spikes, pits)
+            hazards = [
+                {x: 300, y: 540, w: 50, h: 10, type: 'spike'},
+                {x: 550, y: 540, w: 50, h: 10, type: 'spike'}
+            ];
+            
+            particles = [];
+        }
+        
+        // Particle system for effects
+        function createParticle(x, y, color, type) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4,
+                life: 30,
+                color: color,
+                type: type
+            });
+        }
+        
+        function updateParticles() {
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                return p.life > 0;
+            });
+        }
+        
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life / 30;
+                ctx.fillRect(p.x, p.y, 4, 4);
+            });
+            ctx.globalAlpha = 1;
+        }
+        
+        // Input handling
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+                togglePause();
+            }
+            
+            if (e.key === ' ' && gameRunning && !gamePaused) {
+                if (player.grounded) {
+                    player.vy = player.jumpPower;
+                    player.grounded = false;
+                    // Jump particles
+                    for (let i = 0; i < 5; i++) {
+                        createParticle(player.x + player.width/2, player.y + player.height, '#8b7355', 'dust');
+                    }
+                }
+                // Check switch interaction
+                checkSwitchInteraction();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        function checkSwitchInteraction() {
+            switches.forEach(sw => {
+                const dist = Math.hypot(
+                    player.x + player.width/2 - (sw.x + sw.w/2),
+                    player.y + player.height/2 - (sw.y + sw.h/2)
+                );
+                if (dist < 50) {
+                    sw.activated = !sw.activated;
+                    // Toggle connected door
+                    if (sw.connectedTo === 'door1') {
+                        doors[0].locked = !sw.activated;
+                    } else if (sw.connectedTo === 'door2') {
+                        doors[1].locked = !sw.activated;
+                    } else if (sw.connectedTo === 'bridge') {
+                        doors[2].locked = !sw.activated;
+                    }
+                    // Effect
+                    for (let i = 0; i < 10; i++) {
+                        createParticle(sw.x + sw.w/2, sw.y + sw.h/2, '#4ade80', 'sparkle');
+                    }
+                }
+            });
+        }
+        
+        // Physics and collision
+        function update() {
+            if (gamePaused) return;
+            
+            // Horizontal movement
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                player.vx -= 1;
+                player.facing = -1;
+                player.animFrame++;
+            }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                player.vx += 1;
+                player.facing = 1;
+                player.animFrame++;
+            }
+            
+            player.vx *= friction;
+            player.x += player.vx;
+            
+            // Vertical movement
+            player.vy += gravity;
+            player.y += player.vy;
+            
+            player.grounded = false;
+            
+            // Platform collisions
+            platforms.forEach(plat => {
+                if (checkCollision(player, plat)) {
+                    if (player.vy > 0 && player.y < plat.y) {
+                        player.y = plat.y - player.height;
+                        player.vy = 0;
+                        player.grounded = true;
+                    }
+                }
+            });
+            
+            // Moving platforms
+            movingPlatforms.forEach(mp => {
+                mp.x += mp.vx;
+                if (mp.x <= mp.minX || mp.x >= mp.maxX) {
+                    mp.vx *= -1;
+                }
+                
+                if (checkCollision(player, mp)) {
+                    if (player.vy > 0 && player.y < mp.y) {
+                        player.y = mp.y - player.height;
+                        player.vy = 0;
+                        player.grounded = true;
+                        player.x += mp.vx;
+                    }
+                }
+            });
+            
+            // Pressure plates
+            pressurePlates.forEach(pp => {
+                pp.activated = checkCollision(player, pp);
+                if (pp.activated) {
+                    // Activate corresponding door
+                    if (pp.id === 1) doors[0].locked = false;
+                    if (pp.id === 2) doors[1].locked = false;
+                    if (pp.id === 3) doors[2].locked = false;
+                }
+            });
+            
+            // Door collisions
+            doors.forEach(door => {
+                if (door.locked && checkCollision(player, door)) {
+                    player.x -= player.vx * 2;
+                }
+            });
+            
+            // Hazard collisions
+            hazards.forEach(haz => {
+                if (checkCollision(player, haz)) {
+                    respawnPlayer();
+                }
+            });
+            
+            // Key collection
+            keys.forEach(key => {
+                if (!key.collected && checkCollision(player, key)) {
+                    key.collected = true;
+                    keysCollected++;
+                    document.getElementById('keyCount').textContent = keysCollected;
+                    // Victory particles
+                    for (let i = 0; i < 20; i++) {
+                        createParticle(key.x + 10, key.y + 10, key.color, 'sparkle');
+                    }
+                    
+                    if (keysCollected === 3) {
+                        setTimeout(() => {
+                            document.getElementById('winScreen').style.display = 'flex';
+                            gameRunning = false;
+                        }, 500);
+                    }
+                }
+            });
+            
+            // Screen boundaries
+            if (player.x < 0) player.x = 0;
+            if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+            if (player.y > canvas.height) {
+                respawnPlayer();
+            }
+            
+            updateParticles();
+        }
+        
+        function checkCollision(a, b) {
+            return a.x < b.x + b.w &&
+                   a.x + a.width > b.x &&
+                   a.y < b.y + b.h &&
+                   a.y + a.height > b.y;
+        }
+        
+        function respawnPlayer() {
+            player.x = 50;
+            player.y = 400;
+            player.vx = 0;
+            player.vy = 0;
+            // Death particles
+            for (let i = 0; i < 15; i++) {
+                createParticle(player.x + 16, player.y + 24, '#ef4444', 'explosion');
+            }
+        }
+        
+        // Rendering with retro 3D style
+        function draw() {
+            // Clear with jungle gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#1e3a1e');
+            gradient.addColorStop(1, '#2d4a2d');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background jungle elements (parallax-style)
+            drawBackground();
+            
+            // Draw platforms with 3D effect
+            platforms.forEach(plat => {
+                drawPlatform(plat);
+            });
+            
+            // Draw moving platforms
+            movingPlatforms.forEach(mp => {
+                drawMovingPlatform(mp);
+            });
+            
+            // Draw pressure plates
+            pressurePlates.forEach(pp => {
+                drawPressurePlate(pp);
+            });
+            
+            // Draw switches
+            switches.forEach(sw => {
+                drawSwitch(sw);
+            });
+            
+            // Draw doors
+            doors.forEach(door => {
+                drawDoor(door);
+            });
+            
+            // Draw hazards
+            hazards.forEach(haz => {
+                drawHazard(haz);
+            });
+            
+            // Draw keys
+            keys.forEach(key => {
+                if (!key.collected) drawKey(key);
+            });
+            
+            // Draw player with 3D effect
+            drawPlayer();
+            
+            // Draw particles
+            drawParticles();
+            
+            // Draw foreground vines
+            drawForeground();
+        }
+        
+        function drawBackground() {
+            // Distant trees
+            ctx.fillStyle = '#1a2f1a';
+            for (let i = 0; i < 10; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * 100, 300);
+                ctx.lineTo(i * 100 + 30, 100);
+                ctx.lineTo(i * 100 + 60, 300);
+                ctx.fill();
+            }
+            
+            // Temple ruins in background
+            ctx.fillStyle = '#3a3a4a';
+            ctx.fillRect(350, 200, 100, 150);
+            ctx.fillRect(370, 180, 60, 20);
+            // Temple details
+            ctx.fillStyle = '#2a2a3a';
+            ctx.fillRect(380, 220, 15, 40);
+            ctx.fillRect(405, 220, 15, 40);
+        }
+        
+        function drawPlatform(plat) {
+            // 3D effect with side
+            ctx.fillStyle = '#4a5d23';
+            ctx.fillRect(plat.x, plat.y + 5, plat.w, plat.h);
+            
+            // Top surface
+            ctx.fillStyle = '#6b8e23';
+            ctx.fillRect(plat.x, plat.y, plat.w, 10);
+            
+            // Grass/vine details
+            ctx.fillStyle = '#228b22';
+            for (let i = 0; i < plat.w; i += 20) {
+                ctx.fillRect(plat.x + i, plat.y - 5, 3, 10);
+            }
+            
+            // Stone texture
+            ctx.fillStyle = '#3a4a1a';
+            ctx.fillRect(plat.x + 10, plat.y + 15, 20, 5);
+            ctx.fillRect(plat.x + 50, plat.y + 25, 15, 5);
+        }
+        
+        function drawMovingPlatform(mp) {
+            ctx.fillStyle = '#8b7355';
+            ctx.fillRect(mp.x, mp.y + 5, mp.w, mp.h);
+            ctx.fillStyle = '#a08060';
+            ctx.fillRect(mp.x, mp.y, mp.w, 8);
+            // Rope details
+            ctx.strokeStyle = '#654321';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(mp.x + 10, mp.y);
+            ctx.lineTo(mp.x + 10, mp.y - 50);
+            ctx.moveTo(mp.x + mp.w - 10, mp.y);
+            ctx.lineTo(mp.x + mp.w - 10, mp.y - 50);
+            ctx.stroke();
+        }
+        
+        function drawPressurePlate(pp) {
+            ctx.fillStyle = pp.activated ? '#4ade80' : '#6b6b6b';
+            ctx.fillRect(pp.x, pp.y, pp.w, pp.h);
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(pp.x, pp.y, pp.w, pp.h);
+            // Center detail
+            ctx.fillStyle = pp.activated ? '#22c55e' : '#555';
+            ctx.fillRect(pp.x + 10, pp.y + 5, pp.w - 20, pp.h - 10);
+        }
+        
+        function drawSwitch(sw) {
+            // Base
+            ctx.fillStyle = '#666';
+            ctx.fillRect(sw.x + 10, sw.y + 15, 10, 15);
+            // Lever
+            ctx.fillStyle = sw.activated ? '#4ade80' : '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(sw.x + 15, sw.y + 10, 8, 0, Math.PI * 2);
+            ctx.fill();
+            // Glow effect
+            if (sw.activated) {
+                ctx.fillStyle = 'rgba(74, 222, 128, 0.3)';
+                ctx.beginPath();
+                ctx.arc(sw.x + 15, sw.y + 10, 15, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function drawDoor(door) {
+            if (door.locked) {
+                // Closed door
+                ctx.fillStyle = '#4a3728';
+                ctx.fillRect(door.x, door.y, door.w, door.h);
+                // Door frame
+                ctx.strokeStyle = '#6b5344';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(door.x, door.y, door.w, door.h);
+                // Lock
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillRect(door.x + 2, door.y + door.h/2 - 5, 6, 10);
+            } else {
+                // Open door
+                ctx.fillStyle = '#2a1f18';
+                ctx.fillRect(door.x, door.y, door.w, door.h);
+            }
+        }
+        
+        function drawHazard(haz) {
+            // Spikes
+            ctx.fillStyle = '#666';
+            const spikeCount = Math.floor(haz.w / 10);
+            for (let i = 0; i < spikeCount; i++) {
+                ctx.beginPath();
+                ctx.moveTo(haz.x + i * 10, haz.y + 10);
+                ctx.lineTo(haz.x + i * 10 + 5, haz.y);
+                ctx.lineTo(haz.x + i * 10 + 10, haz.y + 10);
+                ctx.fill();
+            }
+        }
+        
+        function drawKey(key) {
+            // Key glow
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.3)';
+            ctx.beginPath();
+            ctx.arc(key.x + 10, key.y + 10, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Key body
+            ctx.fillStyle = key.color;
+            ctx.fillRect(key.x + 8, key.y + 5, 4, 12);
+            ctx.fillRect(key.x + 5, key.y + 5, 10, 4);
+            ctx.fillRect(key.x + 5, key.y + 13, 6, 3);
+        }
+        
+        function drawPlayer() {
+            const x = player.x;
+            const y = player.y;
+            
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(x + 16, y + 48, 12, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Body (3D cylinder effect)
+            ctx.fillStyle = '#c2410c';
+            ctx.fillRect(x + 8, y + 20, 16, 20);
+            
+            // Highlight
+            ctx.fillStyle = '#ea580c';
+            ctx.fillRect(x + 8, y + 20, 4, 20);
+            
+            // Head (sphere effect)
+            ctx.fillStyle = '#fca5a5';
+            ctx.beginPath();
+            ctx.arc(x + 16, y + 12, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Hat
+            ctx.fillStyle = '#92400e';
+            ctx.fillRect(x + 6, y + 4, 20, 6);
+            ctx.fillRect(x + 10, y, 12, 4);
+            
+            // Backpack
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(x + (player.facing > 0 ? 2 : 22), y + 22, 6, 16);
+            
+            // Legs animation
+            const legOffset = Math.sin(player.animFrame * 0.2) * 5;
+            ctx.fillStyle = '#1e3a5f';
+            ctx.fillRect(x + 10 + legOffset, y + 40, 5, 8);
+            ctx.fillRect(x + 17 - legOffset, y + 40, 5, 8);
+            
+            // Arms
+            ctx.fillStyle = '#fca5a5';
+            const armSwing = Math.sin(player.animFrame * 0.2) * 8;
+            ctx.fillRect(x + 4 + armSwing, y + 22, 4, 12);
+            ctx.fillRect(x + 24 - armSwing, y + 22, 4, 12);
+        }
+        
+        function drawForeground() {
+            // Vines hanging down
+            ctx.strokeStyle = '#228b22';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < canvas.width; i += 100) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i + 10, 80 + Math.sin(i) * 20);
+                ctx.stroke();
+                
+                // Leaves on vines
+                ctx.fillStyle = '#32cd32';
+                ctx.beginPath();
+                ctx.ellipse(i + 5, 40 + Math.sin(i) * 10, 8, 4, Math.PI / 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // UI Functions
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            initLevel();
+            gameRunning = true;
+            gamePaused = false;
+            gameLoop();
+        }
+        
+        function togglePause() {
+            if (!gameRunning) return;
+            gamePaused = !gamePaused;
+            document.getElementById('pauseMenu').style.display = gamePaused ? 'flex' : 'none';
+        }
+        
+        function resumeGame() {
+            gamePaused = false;
+            document.getElementById('pauseMenu').style.display = 'none';
+        }
+        
+        function restartGame() {
+            document.getElementById('pauseMenu').style.display = 'none';
+            document.getElementById('winScreen').style.display = 'none';
+            initLevel();
+            document.getElementById('keyCount').textContent = '0';
+            gameRunning = true;
+            gamePaused = false;
+        }
+        
+        // Pause button
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        
+        // Initial draw
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    </script>
 </body>
 </html>
